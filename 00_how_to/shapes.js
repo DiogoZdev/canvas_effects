@@ -21,3 +21,11 @@ c.fillStyle = color;
 c.arc(10, 10, 10, 0, Math.PI*2 , false);
 c.fill()
 c.closePath();
+
+// TIANGLE
+c.beginPath();
+c.moveTo(75, 50);
+c.lineTo(100, 75);
+c.lineTo(100, 25);
+c.fill();
+c.closePath();
