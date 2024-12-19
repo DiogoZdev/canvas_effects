@@ -1,3 +1,10 @@
+// MAIN
+const canvas = document.querySelector('canvas')
+const c = canvas.getContext('2d')
+
+canvas.width = innerWidth - 1;
+canvas.height = innerHeight - 1;
+
 // UTILS
 function randomIntFromRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min)
@@ -20,17 +27,10 @@ const movement = {
   right: false
 }
 
-
-// MAIN
-const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
-const gravity = 1;
-let errorCount = 0;
-
-let isPaused = false;
-
-canvas.width = innerWidth - 1;
-canvas.height = innerHeight - 1;
+const data = {
+  score: 0,
+  isPaused: false,
+}
 
 addEventListener('resize', () => {
   canvas.width = innerWidth
@@ -40,7 +40,6 @@ addEventListener('resize', () => {
 })
 
 addEventListener('keydown', (pressed) => {
-  console.log(pressed.key)
   switch (pressed.key) {
     case 'ArrowUp':
     case 'w':
@@ -69,7 +68,7 @@ addEventListener('keydown', (pressed) => {
       }
       break;
     case 'p':
-      isPaused = !isPaused;
+      data.isPaused = !data.isPaused;
       break;
   }
 })
@@ -96,91 +95,11 @@ addEventListener('keyup', (pressed) => {
 })
 
 // Objects
-function Particle(x, y, stroke, rad) {
-  this.x = x;
-  this.y = y;
-  this.velocity = {
-    x: (Math.random() - 0.5) * 5,
-    y: (Math.random() - 0.5) * 5
-  };
-  this.color = `${stroke}aa`;
-  this.stroke = stroke;
-  this.radius = rad || 50;
-  this.mass = rad;
-  
-
-  this.draw = () => {
-    c.beginPath()
-    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.strokeStyle = this.stroke
-    c.stroke()
-    c.fillStyle = this.color
-    c.fill()
-    c.closePath()
-  }
-
-  this.update = particles => {
-    this.x += this.velocity.x
-    this.y += this.velocity.y
-
-    const nextY = this.y + this.radius + this.velocity.y;
-    if (nextY > innerHeight || nextY < 0) {
-      this.velocity.y *= -1
-    } 
-
-    const nextX = this.x + this.radius + this.velocity.x;
-    if (nextX > innerWidth || nextX < 0) {
-      this.velocity.x *= -1
-    }
-
-    if (getDistance(this, mouse) < 150) {
-      this.color = this.stroke
-    } else {
-      this.color = `${this.stroke}33`
-    }
-
-    this.draw();
-
-    for (let i = 0; i < particles.length; i++) {
-      if (this === particles[i]) continue;      
-
-      const distance = getDistance(this, particles[i]) - (this.radius + particles[i].radius)
-      
-      if (distance <= 0) {
-        resolveCollision(this, particles[i])  
-      }
-    }
-  }
-}
-
-function Shot(color) {
-  this.x = spaceship.x
-  this.y = spaceship.y
-  this.rad = 3
-  this.speed = 7
-  this.color = color || 'orange'
-
-  this.draw = () => {
-    c.beginPath()
-    c.arc(this.x, this.y, this.rad, 0, Math.PI * 2, false)
-    c.fillStyle = this.color
-    c.fill()
-    c.closePath()
-  }
-
-  this.update = () => {
-    this.x += this.speed;
-
-    this.draw();
-  }
-
-}
-
 function Speceship() {
   this.life = 5
-  this.x = canvas.width / 2
+  this.x = canvas.width / 3
   this.y = canvas.height / 2
-  this.mainColors = ['#3a506b', '#5bc0be', '#967aa1', '#0d00a4', '#e8d7f1', '#c0a9b0' ]
+  this.mainColors = ['#ccd5ae', '#1b263b', '#6c757d', '#6c757d', '#495057', '#590d22' ]
   this.secondaryColors = ['#ffba08', '#f48c06', '#dc2f02', '#4ce0d2', '#70e000']
   
   this.color = this.mainColors[Math.floor(Math.random() * this.mainColors.length)]
@@ -194,30 +113,90 @@ function Speceship() {
     gunshots.push(shot)
   }
 
-
   this.draw = () => {
     if (!this.life) return;
+    const [x, y] = [this.x, this.y]
+
+    // wing (Outer)
     c.beginPath()
-    c.moveTo(this.x, this.y)
-    c.lineTo(this.x - 25, this.y - 8)
-    c.lineTo(this.x - 25, this.y - 15)
-    c.lineTo(this.x - 40, this.y - 20)
-    c.lineTo(this.x - 30, this.y - 7)
-    c.lineTo(this.x - 30, this.y + 8)
-    c.lineTo(this.x - 40, this.y + 20)
-    c.lineTo(this.x - 25, this.y + 15)
-    c.lineTo(this.x - 25, this.y + 8)
+    c.moveTo(x - 10, y)
+    c.lineTo(x - 10, y - 15)
+    c.lineTo(x - 10 - 5 , y - 20)
+    c.lineTo(x - 10 - 20, y - 20)
+    c.lineTo(x - 10 - 20, y + 20)
+    c.lineTo(x - 10 - 5, y + 20)
+    c.lineTo(x - 10, y + 15)
+    c.lineTo(x - 10, y)
     c.fillStyle = this.color
     c.fill()
     c.closePath()
 
+    // wing - inner
     c.beginPath()
-    c.moveTo(this.x + 1, this.y)
-    c.lineTo(this.x - 7, this.y - 3)
-    c.lineTo(this.x - 18, this.y + 5)
+    c.moveTo(x - 10, y)
+    c.lineTo(x - 10, y - 10)
+    c.lineTo(x - 10 - 5 , y - 15)
+    c.lineTo(x - 10 - 15, y - 15)
+    c.lineTo(x - 10 - 15, y + 15)
+    c.lineTo(x - 10 - 5, y + 15)
+    c.lineTo(x - 10, y + 10) 
+    c.lineTo(x - 10, y)
     c.fillStyle = this.secondaryColor
     c.fill()
     c.closePath()
+
+    // tail wing
+    c.beginPath()
+    c.moveTo(x - 40, y)
+    c.lineTo(x - 40, y - 10)  
+    c.lineTo(x - 40 - 5, y - 15)
+    c.lineTo(x - 40 - 15, y - 15)
+    c.lineTo(x - 40 - 15, y + 15)
+    c.lineTo(x - 40 - 5, y + 15)
+    c.lineTo(x - 40, y + 10)
+    c.fillStyle = this.secondaryColor
+    c.fill()
+    c.closePath()
+
+    // body
+    c.beginPath()
+    c.moveTo(x, y - 5)
+    c.lineTo(x - 60, y - 5)
+    c.lineTo(x - 60, y + 5)
+    c.lineTo(x, y + 5)
+    c.fillStyle = this.color
+    c.fill()
+    c.closePath() 
+
+    // front stripe
+    c.beginPath()
+    c.moveTo(x - 3, y - 5)
+    c.lineTo(x - 3, y + 5)
+    c.lineTo(x - 1, y + 5)
+    c.lineTo(x - 1, y - 5)
+    c.fillStyle = this.secondaryColor
+    c.fill()
+    c.closePath()
+
+    // gun
+    c.beginPath();
+    c.moveTo(x, y - 2); // Start at the front of the spaceship
+    c.lineTo(x + 10, y - 2); // Extend forward
+    c.lineTo(x + 10, y + 2); // Extend down
+    c.lineTo(x, y + 2); // Close back
+    c.fillStyle = "#333333"; // Gun color (dark gray)
+    c.fill();
+    c.closePath();
+
+    // gun barrel
+    c.beginPath();
+    c.moveTo(x + 10, y - 1); // Start at the gun tip
+    c.lineTo(x + 15, y - 1); // Extend barrel forward
+    c.lineTo(x + 15, y + 1); // Extend barrel down
+    c.lineTo(x + 10, y + 1); // Close back
+    c.fillStyle = "#555555"; // Barrel color (lighter gray)
+    c.fill();
+    c.closePath();
   }
 
   this.update = () => {
@@ -239,19 +218,146 @@ function Speceship() {
   }
 }
 
-function Enemy() {
-  this.x = canvas.width + 100;
-  this.y = Math.random() * canvas.height;
-  this.super = Math.random() > 0.8
-  this.rad = this.super ? randomIntFromRange(90, 120) : randomIntFromRange(15, 20)
-  this.life = this.rad * 15
+function Shot(color) {
+  this.x = spaceship.x
+  this.y = spaceship.y
+  this.rad = 2
+  this.speed = 9
+  this.color = color || 'orange'
 
   this.draw = () => {
     c.beginPath()
     c.arc(this.x, this.y, this.rad, 0, Math.PI * 2, false)
-    c.fillStyle = 'brown'
+    c.fillStyle = this.color
     c.fill()
     c.closePath()
+  }
+
+  this.update = () => {
+    this.x += this.speed;
+
+    this.draw();
+  }
+
+}
+
+function Enemy() {
+  this.x = canvas.width + 100;
+  this.y = Math.random() * canvas.height;
+  this.super = Math.random() > 0.9
+  this.rad = 15
+  this.life = this.super ? randomIntFromRange(1500, 2000) : randomIntFromRange(300, 600)
+  this.maxLife = this.life
+  const colors = ['#fff', '#adf', '#fff', '#f04', '#05f', '#cc0']
+  this.color = this.super ? '#222' : colors[Math.floor(Math.random() * colors.length)]
+  this.secondaryColor = this.super ? 'red' : colors[Math.floor(Math.random() * colors.length)]
+
+  this.draw = () => {
+    const [x, y] = [this.x, this.y]
+
+    const lifeBarSize = Math.floor((this.life / this.maxLife)  * 10)
+
+    // life bar
+    if (this.maxLife !== this.life) {
+      c.beginPath()
+      c.moveTo(x - 10, y - 30)
+      c.lineTo(x + 10, y - 30)
+      c.lineTo(x + 10, y - 25)
+      c.lineTo(x - 10, y - 25)
+      c.fillStyle = '#222'
+      c.fill()
+      c.closePath()
+
+      c.beginPath()
+      c.moveTo(x - 10, y - 30)
+      c.lineTo(x + lifeBarSize, y - 30)
+      c.lineTo(x + lifeBarSize, y - 25)
+      c.lineTo(x - 10, y - 25)
+      c.fillStyle = '#0c0'
+      c.fill()
+      c.closePath()
+    }
+
+    // wing (Outer)
+    c.beginPath();
+    c.moveTo(x + 10, y);
+    c.lineTo(x + 10, y - 15);
+    c.lineTo(x + 10 + 5, y - 20);
+    c.lineTo(x + 10 + 20, y - 20);
+    c.lineTo(x + 10 + 20, y + 20);
+    c.lineTo(x + 10 + 5, y + 20);
+    c.lineTo(x + 10, y + 15);
+    c.lineTo(x + 10, y);
+    c.fillStyle = this.color;
+    c.fill();
+    c.closePath();
+
+    // wing - inner
+    c.beginPath();
+    c.moveTo(x + 10, y);
+    c.lineTo(x + 10, y - 10);
+    c.lineTo(x + 10 + 5, y - 15);
+    c.lineTo(x + 10 + 15, y - 15);
+    c.lineTo(x + 10 + 15, y + 15);
+    c.lineTo(x + 10 + 5, y + 15);
+    c.lineTo(x + 10, y + 10);
+    c.lineTo(x + 10, y);
+    c.fillStyle = this.secondaryColor;
+    c.fill();
+    c.closePath();
+
+    // tail wing
+    c.beginPath();
+    c.moveTo(x + 40, y);
+    c.lineTo(x + 40, y - 10);
+    c.lineTo(x + 40 + 5, y - 15);
+    c.lineTo(x + 40 + 15, y - 15);
+    c.lineTo(x + 40 + 15, y + 15);
+    c.lineTo(x + 40 + 5, y + 15);
+    c.lineTo(x + 40, y + 10);
+    c.fillStyle = this.secondaryColor;
+    c.fill();
+    c.closePath();
+
+    // body
+    c.beginPath();
+    c.moveTo(x, y - 5);
+    c.lineTo(x + 60, y - 5);
+    c.lineTo(x + 60, y + 5);
+    c.lineTo(x, y + 5);
+    c.fillStyle = this.color;
+    c.fill();
+    c.closePath();
+
+    // front stripe
+    c.beginPath();
+    c.moveTo(x + 3, y - 5);
+    c.lineTo(x + 3, y + 5);
+    c.lineTo(x + 1, y + 5);
+    c.lineTo(x + 1, y - 5);
+    c.fillStyle = this.secondaryColor;
+    c.fill();
+    c.closePath();
+
+    // gun
+    c.beginPath();
+    c.moveTo(x, y - 2); // Start at the back of the spaceship
+    c.lineTo(x - 10, y - 2); // Extend backward
+    c.lineTo(x - 10, y + 2); // Extend down
+    c.lineTo(x, y + 2); // Close back
+    c.fillStyle = "#333333"; // Gun color (dark gray)
+    c.fill();
+    c.closePath();
+
+    // gun barrel
+    c.beginPath();
+    c.moveTo(x - 10, y - 1); // Start at the gun tip
+    c.lineTo(x - 15, y - 1); // Extend barrel backward
+    c.lineTo(x - 15, y + 1); // Extend barrel down
+    c.lineTo(x - 10, y + 1); // Close back
+    c.fillStyle = "#555555"; // Barrel color (lighter gray)
+    c.fill();
+    c.closePath();
   }
 
   this.update = () => {
@@ -268,20 +374,36 @@ function Enemy() {
 function Star(config) {
   this.x = config?.start ? Math.random() * canvas.width : canvas.width;
   this.y = Math.random() * canvas.height;
-  this.colors = ['#fff', '#adf', '#fff', '#f0c', '#05f' ]
+  this.colors = ['#fff', '#adf', '#fff', '#f04', '#05f', '#cc0' ]
   this.color = this.colors[Math.floor(Math.random() * this.colors.length)]
+  this.isSpecial = Math.random() < .01
 
 
   this.draw = () => {
-    c.beginPath()
-    c.arc(this.x, this.y, 1, 0, Math.PI * 2, false)
-    c.fillStyle = this.color;
-    c.fill()
-    c.closePath()
+    if (this.isSpecial) {
+      c.beginPath()
+      c.moveTo(this.x, this.y - 8); // Top point (outer)
+      c.lineTo(this.x + 1, this.y - 1); // Right upper point (inner)
+      c.lineTo(this.x + 8, this.y); // Right point (outer)
+      c.lineTo(this.x + 1, this.y + 1); // Right lower point (inner)
+      c.lineTo(this.x, this.y + 8); // Bottom point (outer)
+      c.lineTo(this.x - 1, this.y + 1); // Left lower point (inner)
+      c.lineTo(this.x - 8, this.y); // Left point (outer)
+      c.lineTo(this.x - 1, this.y - 1); // Left upper point (inner)
+      c.fillStyle = this.color;
+      c.fill()
+      c.closePath()
+    } else {
+      c.beginPath()
+      c.arc(this.x, this.y, 1, 0, Math.PI * 2, false)
+      c.fillStyle = this.color;
+      c.fill()
+      c.closePath()
+    }
   }
 
   this.update = () => {
-    this.x -= 8;
+    this.x -= this.isSpecial ? 6 : 8;
     this.draw();
   } 
 }
@@ -306,22 +428,31 @@ function init() {
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate)
+  
+  c.font = 'bold 20px Courier'
 
-  if (isPaused) return;
+  if (data.isPaused) {
 
-  c.clearRect(0, 0, canvas.width, canvas.height)
+    c.font = '20px Courier'
 
-  spaceship?.update()
-
-  // Update gunshots
-  for (let i = 0; i < gunshots.length; i++) {
-    gunshots[i].update()
-
-    if (gunshots[i].x > canvas.width) {
-      gunshots.splice(i, 1)
-    }
+    c.beginPath();
+    c.fillStyle = 'white';
+    c.fillText('PAUSED', canvas.width / 2, canvas.height / 2)
+    c.fillText('PRESS `P` TO START', canvas.width / 2 - 80, canvas.height / 2 + 20, undefined)
+    c.closePath();
+    
+    return;
   }
-
+  
+  c.clearRect(0, 0, canvas.width, canvas.height)
+  
+  c.beginPath();
+  c.fillStyle = 'white';
+  c.fillText(`SCORE: ${data.score}`, canvas.width - 200, 50, 400)
+  c.closePath();
+  
+  stars.push(new Star())
+  
   // Update Stars
   for (let i = 0; i < stars.length; i++) {
     stars[i].update()
@@ -331,11 +462,10 @@ function animate() {
     }
   }
 
-  stars.push(new Star())
 
   // Chance of spawning new Enemy
   const enemySpawnChance = Math.floor(Math.random() * 1000)
-  if (enemySpawnChance < 2) {
+  if (enemySpawnChance < 3) {
     enemies.push(new Enemy())
   }
 
@@ -346,7 +476,6 @@ function animate() {
     const spaceShipDistance = getDistance(enemies[i], spaceship)
 
     if (spaceship && spaceShipDistance - enemies[i].rad <= 0) {
-      console.log('hit')
       if (spaceship) spaceship.x -= 60;
       if (spaceship) spaceship.life -= 1;
     }
@@ -355,10 +484,11 @@ function animate() {
       const distance = getDistance(enemies[i], gunshots[j])
 
       if (distance < enemies[i]?.rad + gunshots[j]?.rad) {
-        enemies[i].life -= 40
+        enemies[i].life -= 20
         gunshots.splice(j, 1)
 
         if (enemies[i].life <= 0) {
+          data.score += Math.floor(enemies[i].maxLife / 10)
           enemies.splice(i, 1)
         }
       }
@@ -366,6 +496,17 @@ function animate() {
 
     if (enemies[i]?.x < 0) {
       enemies.splice(i, 1)
+    }
+  }
+
+  spaceship?.update()
+
+  // Update gunshots
+  for (let i = 0; i < gunshots.length; i++) {
+    gunshots[i].update()
+
+    if (gunshots[i].x > canvas.width) {
+      gunshots.splice(i, 1)
     }
   }
 }
